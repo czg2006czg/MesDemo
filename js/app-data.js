@@ -47,6 +47,32 @@
         report.ReportDate,
         report.Operator
       ], onSuccess, onFail);
+    },
+    queryPurchaseRequests: function (keyword, status, onSuccess, onFail) {
+      invoke("QueryPurchaseRequests", [keyword || "", status || ""], onSuccess, onFail);
+    },
+    savePurchaseRequest: function (request, onSuccess, onFail) {
+      invoke("SavePurchaseRequest", [
+        request.ItemName,
+        request.Spec,
+        request.Qty,
+        request.Unit,
+        request.RequiredDate,
+        request.Applicant
+      ], onSuccess, onFail);
+    },
+    queryPartners: function (keyword, nature, onSuccess, onFail) {
+      invoke("QueryPartners", [keyword || "", nature || ""], onSuccess, onFail);
+    },
+    savePartner: function (partner, onSuccess, onFail) {
+      invoke("SavePartner", [
+        partner.Code,
+        partner.Name,
+        partner.Nature,
+        partner.Contact,
+        partner.Phone,
+        partner.Address
+      ], onSuccess, onFail);
     }
   };
 })(window);

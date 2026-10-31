@@ -32,6 +32,12 @@
                     <li class="layui-nav-item">
                         <a href="javascript:;" lay-unselect="" data-url="pages/Processes.aspx">工序列表</a>
                     </li>
+                    <li class="layui-nav-item">
+                        <a href="javascript:;" lay-unselect="" data-url="pages/PurchaseRequests.aspx">采购申请</a>
+                    </li>
+                    <li class="layui-nav-item">
+                        <a href="javascript:;" lay-unselect="" data-url="pages/Partners.aspx">往来单位</a>
+                    </li>
                 </ul>
             </div>
         </div>
@@ -40,7 +46,7 @@
             <iframe id="contentFrame" class="content-iframe" src="pages/Yield.aspx" title="内容区"></iframe>
         </div>
 
-        <div class="layui-footer">产量录入 / 工单列表 / 工序列表</div>
+        <div class="layui-footer">产量录入 / 工单列表 / 工序列表 / 采购申请 / 往来单位</div>
     </div>
 
     <script src="lib/layui/layui.js"></script>

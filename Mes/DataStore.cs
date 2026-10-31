@@ -131,6 +131,167 @@ namespace MesDemo
             }
         }
 
+        public static List<PurchaseRequest> GetPurchaseRequests(string keyword, string status)
+        {
+            MesData data = Load();
+            List<PurchaseRequest> list = new List<PurchaseRequest>();
+            keyword = (keyword ?? string.Empty).Trim();
+            status = (status ?? string.Empty).Trim();
+
+            for (int i = 0; i < data.PurchaseRequests.Count; i++)
+            {
+                PurchaseRequest request = data.PurchaseRequests[i];
+                if (keyword.Length > 0
+                    && request.Id.IndexOf(keyword, StringComparison.OrdinalIgnoreCase) < 0
+                    && request.ItemName.IndexOf(keyword, StringComparison.OrdinalIgnoreCase) < 0)
+                {
+                    continue;
+                }
+                if (status.Length > 0 && request.Status != status)
+                {
+                    continue;
+                }
+                list.Add(request);
+            }
+            return list;
+        }
+
+        /// <summary>新增采购申请，申请单号按 PR-日期-序号 自动生成，初始状态为待审批。</summary>
+        public static PurchaseRequest AddPurchaseRequest(PurchaseRequest request)
+        {
+            if (request == null)
+            {
+                throw new ArgumentNullException("request");
+            }
+
+            request.ItemName = (request.ItemName ?? string.Empty).Trim();
+            if (request.ItemName.Length == 0)
+            {
+                throw new ArgumentException("请填写物料名称。");
+            }
+            if (request.Qty <= 0)
+            {
+                throw new ArgumentException("数量必须大于 0。");
+            }
+            request.Applicant = (request.Applicant ?? string.Empty).Trim();
+            if (request.Applicant.Length == 0)
+            {
+                throw new ArgumentException("请填写申请人。");
+            }
+
+            lock (SyncRoot)
+            {
+                MesData data = LoadInternal();
+                string prefix = "PR-" + DateTime.Now.ToString("yyyyMMdd") + "-";
+                int maxSeq = 0;
+
+                for (int i = 0; i < data.PurchaseRequests.Count; i++)
+                {
+                    string id = data.PurchaseRequests[i].Id ?? string.Empty;
+                    if (!id.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
+                    {
+                        continue;
+                    }
+                    int seq;
+                    if (int.TryParse(id.Substring(prefix.Length), out seq) && seq > maxSeq)
+                    {
+                        maxSeq = seq;
+                    }
+                }
+
+                request.Id = prefix + (maxSeq + 1).ToString("000");
+                request.Spec = (request.Spec ?? string.Empty).Trim();
+                request.Unit = (request.Unit ?? string.Empty).Trim();
+                if (request.Unit.Length == 0)
+                {
+                    request.Unit = "件";
+                }
+                request.RequiredDate = (request.RequiredDate ?? string.Empty).Trim();
+                request.Status = "待审批";
+                request.CreatedAt = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
+
+                data.PurchaseRequests.Insert(0, request);
+                SaveInternal(data);
+                return request;
+            }
+        }
+
+        public static List<Partner> GetPartners(string keyword, string nature)
+        {
+            MesData data = Load();
+            List<Partner> list = new List<Partner>();
+            keyword = (keyword ?? string.Empty).Trim();
+            nature = (nature ?? string.Empty).Trim();
+
+            for (int i = 0; i < data.Partners.Count; i++)
+            {
+                Partner partner = data.Partners[i];
+                if (keyword.Length > 0
+                    && partner.Code.IndexOf(keyword, StringComparison.OrdinalIgnoreCase) < 0
+                    && partner.Name.IndexOf(keyword, StringComparison.OrdinalIgnoreCase) < 0
+                    && partner.Contact.IndexOf(keyword, StringComparison.OrdinalIgnoreCase) < 0)
+                {
+                    continue;
+                }
+                if (nature.Length > 0 && partner.Nature != nature)
+                {
+                    continue;
+                }
+                list.Add(partner);
+            }
+            return list;
+        }
+
+        /// <summary>新增或更新往来单位（按单位编码判重）。</summary>
+        public static Partner SavePartner(Partner partner)
+        {
+            if (partner == null)
+            {
+                throw new ArgumentNullException("partner");
+            }
+
+            partner.Code = (partner.Code ?? string.Empty).Trim();
+            partner.Name = (partner.Name ?? string.Empty).Trim();
+            partner.Nature = (partner.Nature ?? string.Empty).Trim();
+            partner.Contact = (partner.Contact ?? string.Empty).Trim();
+            partner.Phone = (partner.Phone ?? string.Empty).Trim();
+            partner.Address = (partner.Address ?? string.Empty).Trim();
+
+            if (partner.Code.Length == 0)
+            {
+                throw new ArgumentException("请填写单位编码。");
+            }
+            if (partner.Name.Length == 0)
+            {
+                throw new ArgumentException("请填写单位名称。");
+            }
+            if (partner.Nature != "供应商" && partner.Nature != "客户")
+            {
+                throw new ArgumentException("请选择单位性质（供应商/客户）。");
+            }
+
+            lock (SyncRoot)
+            {
+                MesData data = LoadInternal();
+                Partner existing = data.Partners.Find(delegate(Partner p) { return p.Code == partner.Code; });
+
+                if (existing != null)
+                {
+                    existing.Name = partner.Name;
+                    existing.Nature = partner.Nature;
+                    existing.Contact = partner.Contact;
+                    existing.Phone = partner.Phone;
+                    existing.Address = partner.Address;
+                    SaveInternal(data);
+                    return existing;
+                }
+
+                data.Partners.Insert(0, partner);
+                SaveInternal(data);
+                return partner;
+            }
+        }
+
         private static string ResolveStatus(Order order)
         {
             if (order.DoneQty <= 0) return "待开工";
@@ -150,6 +311,8 @@ namespace MesDemo
                     if (cached.Orders == null) cached.Orders = new List<Order>();
                     if (cached.Processes == null) cached.Processes = new List<ProcessItem>();
                     if (cached.Reports == null) cached.Reports = new List<Report>();
+                    if (cached.PurchaseRequests == null) cached.PurchaseRequests = new List<PurchaseRequest>();
+                    if (cached.Partners == null) cached.Partners = new List<Partner>();
                     return cached;
                 }
             }
@@ -193,6 +356,19 @@ namespace MesDemo
                 {
                     new Report { OrderId = "WO-20261031-001", ProcessCode = "OP20", GoodQty = 120, BadQty = 2, ReportDate = "2026-10-31", Operator = "张三" },
                     new Report { OrderId = "WO-20261031-004", ProcessCode = "OP10", GoodQty = 80, BadQty = 0, ReportDate = "2026-10-31", Operator = "李四" }
+                },
+                PurchaseRequests = new List<PurchaseRequest>
+                {
+                    new PurchaseRequest { Id = "PR-20261031-001", ItemName = "电机壳体毛坯", Spec = "HT250", Qty = 1200, Unit = "件", RequiredDate = "2026-11-05", Applicant = "张三", Status = "待审批", CreatedAt = "2026-10-30 09:20:00" },
+                    new PurchaseRequest { Id = "PR-20261031-002", ItemName = "端盖铸件", Spec = "ZL102", Qty = 600, Unit = "件", RequiredDate = "2026-11-08", Applicant = "李四", Status = "已审批", CreatedAt = "2026-10-29 15:10:00" },
+                    new PurchaseRequest { Id = "PR-20261031-003", ItemName = "漆包线", Spec = "QZ-2/130", Qty = 300, Unit = "千克", RequiredDate = "2026-11-10", Applicant = "王五", Status = "待审批", CreatedAt = "2026-10-31 08:30:00" }
+                },
+                Partners = new List<Partner>
+                {
+                    new Partner { Code = "GYS001", Name = "江苏恒力机电有限公司", Nature = "供应商", Contact = "陈经理", Phone = "0512-88886666", Address = "苏州市吴中区" },
+                    new Partner { Code = "GYS002", Name = "宁波精工铸造厂", Nature = "供应商", Contact = "刘师傅", Phone = "0574-55553333", Address = "宁波市北仑区" },
+                    new Partner { Code = "KH001", Name = "上海雷博电气有限公司", Nature = "客户", Contact = "周总", Phone = "021-66669999", Address = "上海市浦东新区" },
+                    new Partner { Code = "KH002", Name = "杭州东成贸易有限公司", Nature = "客户", Contact = "孙经理", Phone = "0571-77778888", Address = "杭州市余杭区" }
                 }
             };
         }

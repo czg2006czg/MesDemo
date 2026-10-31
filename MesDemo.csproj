@@ -77,6 +77,20 @@
     <Compile Include="pages\Yield.aspx.designer.cs">
       <DependentUpon>Yield.aspx</DependentUpon>
     </Compile>
+    <Compile Include="pages\Partners.aspx.cs">
+      <DependentUpon>Partners.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="pages\Partners.aspx.designer.cs">
+      <DependentUpon>Partners.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="pages\PurchaseRequests.aspx.cs">
+      <DependentUpon>PurchaseRequests.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="pages\PurchaseRequests.aspx.designer.cs">
+      <DependentUpon>PurchaseRequests.aspx</DependentUpon>
+    </Compile>
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
@@ -91,6 +105,8 @@
     <Content Include="lib\layui\font\iconfont.woff2" />
     <Content Include="lib\layui\layui.js" />
     <Content Include="pages\Processes.aspx" />
+    <Content Include="pages\Partners.aspx" />
+    <Content Include="pages\PurchaseRequests.aspx" />
     <Content Include="pages\WorkOrders.aspx" />
     <Content Include="pages\Yield.aspx" />
     <Content Include="web.config" />
