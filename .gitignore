@@ -1,0 +1,11 @@
+# 构建产物
+bin/
+obj/
+
+# Visual Studio 用户配置
+.vs/
+*.user
+*.suo
+
+# 运行时生成的数据文件
+App_Data/*.json
