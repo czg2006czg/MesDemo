@@ -48,31 +48,55 @@
         report.Operator
       ], onSuccess, onFail);
     },
-    queryPurchaseRequests: function (keyword, status, onSuccess, onFail) {
-      invoke("QueryPurchaseRequests", [keyword || "", status || ""], onSuccess, onFail);
-    },
-    savePurchaseRequest: function (request, onSuccess, onFail) {
-      invoke("SavePurchaseRequest", [
-        request.ItemName,
-        request.Spec,
-        request.Qty,
-        request.Unit,
-        request.RequiredDate,
-        request.Applicant
+    submitPurchaseRequest: function (header, itemsJson, onSuccess, onFail) {
+      invoke("SubmitPurchaseRequest", [
+        header.Applicant,
+        header.Department,
+        header.RequestType,
+        header.AppliedAt,
+        itemsJson
       ], onSuccess, onFail);
     },
-    queryPartners: function (keyword, nature, onSuccess, onFail) {
-      invoke("QueryPartners", [keyword || "", nature || ""], onSuccess, onFail);
+    getPartner: function (code, onSuccess, onFail) {
+      invoke("GetPartner", [code || ""], onSuccess, onFail);
     },
-    savePartner: function (partner, onSuccess, onFail) {
-      invoke("SavePartner", [
+    createPartner: function (partner, onSuccess, onFail) {
+      invoke("CreatePartner", [
         partner.Code,
         partner.Name,
         partner.Nature,
+        partner.Address,
         partner.Contact,
         partner.Phone,
-        partner.Address
+        partner.BankName,
+        partner.BankAccount,
+        partner.RelatedNo
       ], onSuccess, onFail);
+    },
+    updatePartner: function (partner, onSuccess, onFail) {
+      invoke("UpdatePartner", [
+        partner.Code,
+        partner.Name,
+        partner.Nature,
+        partner.Address,
+        partner.Contact,
+        partner.Phone,
+        partner.BankName,
+        partner.BankAccount,
+        partner.RelatedNo
+      ], onSuccess, onFail);
+    },
+    queryMaterialCodes: function (onSuccess, onFail) {
+      invoke("QueryMaterialCodes", [], onSuccess, onFail);
+    },
+    getMaterialCode: function (materialType, onSuccess, onFail) {
+      invoke("GetMaterialCode", [materialType || ""], onSuccess, onFail);
+    },
+    createMaterialCode: function (item, onSuccess, onFail) {
+      invoke("CreateMaterialCode", [item.MaterialType, item.MaxCode], onSuccess, onFail);
+    },
+    updateMaterialCode: function (item, onSuccess, onFail) {
+      invoke("UpdateMaterialCode", [item.MaterialType, item.MaxCode], onSuccess, onFail);
     }
   };
 })(window);

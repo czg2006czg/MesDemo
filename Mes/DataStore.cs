@@ -143,7 +143,8 @@ namespace MesDemo
                 PurchaseRequest request = data.PurchaseRequests[i];
                 if (keyword.Length > 0
                     && request.Id.IndexOf(keyword, StringComparison.OrdinalIgnoreCase) < 0
-                    && request.ItemName.IndexOf(keyword, StringComparison.OrdinalIgnoreCase) < 0)
+                    && (request.Applicant ?? string.Empty).IndexOf(keyword, StringComparison.OrdinalIgnoreCase) < 0
+                    && (request.Department ?? string.Empty).IndexOf(keyword, StringComparison.OrdinalIgnoreCase) < 0)
                 {
                     continue;
                 }
@@ -156,7 +157,7 @@ namespace MesDemo
             return list;
         }
 
-        /// <summary>新增采购申请，申请单号按 PR-日期-序号 自动生成，初始状态为待审批。</summary>
+        /// <summary>新增采购申请（表头 + 明细），申请单号按 PR-日期-序号 自动生成，初始状态为待审批。</summary>
         public static PurchaseRequest AddPurchaseRequest(PurchaseRequest request)
         {
             if (request == null)
@@ -164,19 +165,62 @@ namespace MesDemo
                 throw new ArgumentNullException("request");
             }
 
-            request.ItemName = (request.ItemName ?? string.Empty).Trim();
-            if (request.ItemName.Length == 0)
-            {
-                throw new ArgumentException("请填写物料名称。");
-            }
-            if (request.Qty <= 0)
-            {
-                throw new ArgumentException("数量必须大于 0。");
-            }
             request.Applicant = (request.Applicant ?? string.Empty).Trim();
+            request.Department = (request.Department ?? string.Empty).Trim();
+            request.RequestType = (request.RequestType ?? string.Empty).Trim();
+            request.AppliedAt = (request.AppliedAt ?? string.Empty).Trim();
+
             if (request.Applicant.Length == 0)
             {
                 throw new ArgumentException("请填写申请人。");
+            }
+            if (request.Department.Length == 0)
+            {
+                throw new ArgumentException("请填写申请部门。");
+            }
+            if (request.RequestType.Length == 0)
+            {
+                request.RequestType = "非生产性物料";
+            }
+            if (request.AppliedAt.Length == 0)
+            {
+                request.AppliedAt = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
+            }
+
+            if (request.Items == null || request.Items.Count == 0)
+            {
+                throw new ArgumentException("请至少添加一条申请明细。");
+            }
+
+            for (int i = 0; i < request.Items.Count; i++)
+            {
+                PurchaseItem item = request.Items[i];
+                if (item == null)
+                {
+                    throw new ArgumentException("第 " + (i + 1) + " 行明细为空。");
+                }
+
+                item.ItemCode = (item.ItemCode ?? string.Empty).Trim();
+                item.ItemName = (item.ItemName ?? string.Empty).Trim();
+                item.Description = (item.Description ?? string.Empty).Trim();
+                item.RequiredDate = (item.RequiredDate ?? string.Empty).Trim();
+
+                if (item.ItemCode.Length == 0)
+                {
+                    throw new ArgumentException("第 " + (i + 1) + " 行请填写物料编码。");
+                }
+                if (item.ItemName.Length == 0)
+                {
+                    throw new ArgumentException("第 " + (i + 1) + " 行请填写物料名称。");
+                }
+                if (item.Qty <= 0)
+                {
+                    throw new ArgumentException("第 " + (i + 1) + " 行需求数量必须大于 0。");
+                }
+                if (item.RequiredDate.Length == 0)
+                {
+                    throw new ArgumentException("第 " + (i + 1) + " 行请填写需求日期。");
+                }
             }
 
             lock (SyncRoot)
@@ -200,13 +244,6 @@ namespace MesDemo
                 }
 
                 request.Id = prefix + (maxSeq + 1).ToString("000");
-                request.Spec = (request.Spec ?? string.Empty).Trim();
-                request.Unit = (request.Unit ?? string.Empty).Trim();
-                if (request.Unit.Length == 0)
-                {
-                    request.Unit = "件";
-                }
-                request.RequiredDate = (request.RequiredDate ?? string.Empty).Trim();
                 request.Status = "待审批";
                 request.CreatedAt = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
 
@@ -359,9 +396,24 @@ namespace MesDemo
                 },
                 PurchaseRequests = new List<PurchaseRequest>
                 {
-                    new PurchaseRequest { Id = "PR-20261031-001", ItemName = "电机壳体毛坯", Spec = "HT250", Qty = 1200, Unit = "件", RequiredDate = "2026-11-05", Applicant = "张三", Status = "待审批", CreatedAt = "2026-10-30 09:20:00" },
-                    new PurchaseRequest { Id = "PR-20261031-002", ItemName = "端盖铸件", Spec = "ZL102", Qty = 600, Unit = "件", RequiredDate = "2026-11-08", Applicant = "李四", Status = "已审批", CreatedAt = "2026-10-29 15:10:00" },
-                    new PurchaseRequest { Id = "PR-20261031-003", ItemName = "漆包线", Spec = "QZ-2/130", Qty = 300, Unit = "千克", RequiredDate = "2026-11-10", Applicant = "王五", Status = "待审批", CreatedAt = "2026-10-31 08:30:00" }
+                    new PurchaseRequest
+                    {
+                        Id = "PR-20261031-001", Applicant = "张三", Department = "生产部", RequestType = "非生产性物料",
+                        AppliedAt = "2026-10-30 09:20:00", Status = "待审批", CreatedAt = "2026-10-30 09:20:00",
+                        Items = new List<PurchaseItem>
+                        {
+                            new PurchaseItem { ItemCode = "M0001", ItemName = "电机壳体毛坯", Qty = 1200, Description = "HT250 毛坯", RequiredDate = "2026-11-05" }
+                        }
+                    },
+                    new PurchaseRequest
+                    {
+                        Id = "PR-20261031-002", Applicant = "李四", Department = "设备部", RequestType = "非生产性物料",
+                        AppliedAt = "2026-10-29 15:10:00", Status = "已审批", CreatedAt = "2026-10-29 15:10:00",
+                        Items = new List<PurchaseItem>
+                        {
+                            new PurchaseItem { ItemCode = "M0002", ItemName = "端盖铸件", Qty = 600, Description = "ZL102 铸件", RequiredDate = "2026-11-08" }
+                        }
+                    }
                 },
                 Partners = new List<Partner>
                 {

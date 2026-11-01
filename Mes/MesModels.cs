@@ -34,18 +34,33 @@ namespace MesDemo
         public string Operator { get; set; }
     }
 
-    /// <summary>采购申请</summary>
+    /// <summary>采购申请（表头 + 明细）</summary>
     public class PurchaseRequest
     {
         public string Id { get; set; }
-        public string ItemName { get; set; }
-        public string Spec { get; set; }
-        public int Qty { get; set; }
-        public string Unit { get; set; }
-        public string RequiredDate { get; set; }
         public string Applicant { get; set; }
+        public string Department { get; set; }
+        /// <summary>申请类型，默认非生产性物料</summary>
+        public string RequestType { get; set; }
+        public string AppliedAt { get; set; }
         public string Status { get; set; }
         public string CreatedAt { get; set; }
+        public List<PurchaseItem> Items { get; set; }
+    }
+
+    /// <summary>采购申请明细</summary>
+    public class PurchaseItem
+    {
+        /// <summary>物料编码</summary>
+        public string ItemCode { get; set; }
+        /// <summary>物料名称</summary>
+        public string ItemName { get; set; }
+        /// <summary>需求数量</summary>
+        public int Qty { get; set; }
+        /// <summary>需求描述</summary>
+        public string Description { get; set; }
+        /// <summary>需求日期</summary>
+        public string RequiredDate { get; set; }
     }
 
     /// <summary>往来单位</summary>
@@ -55,9 +70,27 @@ namespace MesDemo
         public string Name { get; set; }
         /// <summary>单位性质：供应商 / 客户</summary>
         public string Nature { get; set; }
-        public string Contact { get; set; }
-        public string Phone { get; set; }
+        /// <summary>单位地址</summary>
         public string Address { get; set; }
+        /// <summary>联系人</summary>
+        public string Contact { get; set; }
+        /// <summary>联系方式</summary>
+        public string Phone { get; set; }
+        /// <summary>银行名称</summary>
+        public string BankName { get; set; }
+        /// <summary>银行账号</summary>
+        public string BankAccount { get; set; }
+        /// <summary>关联号</summary>
+        public string RelatedNo { get; set; }
+    }
+
+    /// <summary>物料类型编号（数据库表 material_code）</summary>
+    public class MaterialCode
+    {
+        /// <summary>物料类型</summary>
+        public string MaterialType { get; set; }
+        /// <summary>当前最大物料编号</summary>
+        public long? MaxCode { get; set; }
     }
 
     /// <summary>站点数据集合，持久化到 App_Data/mes-data.json</summary>
